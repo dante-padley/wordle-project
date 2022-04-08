@@ -1,0 +1,1 @@
+cat /usr/share/dict/words | grep -P  '^[\x61-\x7A]{5}$' > dictionary.txt
