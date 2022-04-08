@@ -3,8 +3,8 @@ app = FastAPI()
 
 @app.get("/")
 async def root():
-    return {"message": "Hello World"}
+    return {"message": "Goodbye World"}
 
-@app.post("/word/isvalid/{word}")
+@app.post("/answer/check/{word}")
 def validateWord(word):
     return {"word": word}
