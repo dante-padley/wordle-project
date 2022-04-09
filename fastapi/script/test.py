@@ -1,5 +1,8 @@
 import fileinput
 
-
+lines = []
 for line in fileinput.input():
-    print(line)
+    lines.append(line)
+    
+    
+print(lines)
