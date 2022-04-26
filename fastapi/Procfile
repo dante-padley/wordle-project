@@ -1,2 +1,3 @@
 word-validation: uvicorn --port $PORT api:app --app-dir=./word-validation/  --reload --reload-dir ./word-validation
 answer-checking: uvicorn --port $PORT api:app --app-dir=./answer-checking/ --reload --reload-dir ./answer-checking
+stats: uvicorn --port $PORT api:app --app-dir=./stats/ --reload --reload-dir ./stats
