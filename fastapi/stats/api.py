@@ -1,20 +1,39 @@
 import re
 import sqlite3
 import contextlib
-from typing import Dict
-
-#import datetime
-#from datetime import date, datetime
+from datetime import date
 
 from fastapi import FastAPI, Depends, Response, HTTPException, status
 from pydantic import BaseModel, BaseSettings, Field
 
+
+#!!! IMPORTANT !!!
+#.env file in this directory contains environment variables.
+#We can use that to refer to the locations of the database(s)
+#without needing to rewrite a ton of stuff.
+#If you want to add env variables to that file, make sure
+#to represent them here.
 class Settings(BaseSettings):
     database: str
     
     class Config:
         env_file = "./stats/.env"
 
+
+#Game class to elegantly accept game submissions to the postGame path
+#Can be used in future operations
+class Game(BaseModel):
+    user_id: int
+    game_id: int
+    finished: date
+    guesses: int
+    won: bool
+
+
+#Scores object: this is only implemented within the Stats object
+#and uses aliases to match Wordle's stats model.
+#When referring to a score in a Stats object, you will use the concrete names
+#like this: [nameOfObject].guesses.four
 class Scores(BaseModel):
     one: int = Field(alias="1", default=0)
     two: int = Field(alias="2", default=0)
@@ -24,6 +43,9 @@ class Scores(BaseModel):
     six: int = Field(alias="6", default=0)
     fail: int = 0
 
+
+#Stats object: use this to assemble a user's stats and return
+#it to them in a standard format.
 class Stats(BaseModel):
     currentStreak: int = 0
     maxStreak: int = 0
@@ -32,26 +54,55 @@ class Stats(BaseModel):
     gamesPlayed: int = 0
     gamesWon: int = 0
     averageGuesses: float = 0
-    
+
+
+#This is a fastapi Depends function that we can use to basically
+#plug in our db connection and DRY up our code quite a bit.
+#See it used in any of the API paths here
 def get_db():
     with contextlib.closing(sqlite3.connect(settings.database)) as db:
         db.row_factory = sqlite3.Row
         yield db
 
+
+#IMPORTANT!!!
+#Can use the settings object to refer to environment variables 
+#like database paths, loggers, etc.
+#Can see an example of usage in the get_db() function just above this
+#Look to just below the imports at the top for more on settings.
 settings = Settings()
 app = FastAPI()
+
 
 @app.get("/")
 async def root():
     return {"message": "What a world!"}
 
-@app.post("/stats/{game}")
-def postGame():
-    #NEEDS:
-    #a model for a "game" submission with a proper date type exactly like whats in DB
-    #a simple db execute and commit line that nicely places the game object members
-    #    into the DB
-    return {}
+
+@app.post("/stats/", status_code=status.HTTP_201_CREATED)
+def postGame(game: Game, db: sqlite3.Connection = Depends(get_db)):
+    #FYI: This function is almost entirely based off of Prof Avery's create_book function
+    #We set the Game object to a dict now to make the db.execute line a bit cleaner
+    g = dict(game)
+    #We use try so we can catch errors writing to the db
+    try:
+        stmt = db.execute(
+            """
+            INSERT INTO games(user_id, game_id, finished, guesses, won)
+            VALUES(:user_id, :game_id, :finished, :guesses, :won)
+            """,
+            g,
+        )
+        db.commit()
+    #handle sqlite integrity errors
+    except sqlite3.IntegrityError as e:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail={"type": type(e).__name__, "msg": str(e)},
+        )
+    #g is already a dict, so just return it.
+    return g
+
 
 @app.get("/stats/user/{user_id}", response_model=Stats)
 def getUserStats(user_id, db: sqlite3.Connection = Depends(get_db)):
@@ -122,7 +173,11 @@ def getUserStats(user_id, db: sqlite3.Connection = Depends(get_db)):
         # Unsure if we should set currentStreak to 0 if it is older than "Yesterday"
         # We can implement later if needed.
 
+    # We return the testStats Stats object (which is not a dict) because we set the
+    # response_model in the path declaration to expect a Stats object.
+    # This is just a different way to do what we did in postGame()
     return testStats
+
 
 @app.get("/stats/leaderboards/wins")
 def getLeaderWins(db: sqlite3.Connection = Depends(get_db)):
@@ -145,6 +200,7 @@ def getLeaderWins(db: sqlite3.Connection = Depends(get_db)):
         leaderboard.append(user)
 
     return {"Top10Winners": leaderboard}
+
 
 @app.get("/stats/leaderboards/streaks")
 def getLeaderStreaks(db: sqlite3.Connection = Depends(get_db)):
