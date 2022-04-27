@@ -47,6 +47,10 @@ async def root():
 
 @app.post("/stats/{game}")
 def postGame():
+    #NEEDS:
+    #a model for a "game" submission with a proper date type exactly like whats in DB
+    #a simple db execute and commit line that nicely places the game object members
+    #    into the DB
     return {}
 
 @app.get("/stats/user/{user_id}", response_model=Stats)
@@ -58,12 +62,19 @@ def getUserStats(user_id, db: sqlite3.Connection = Depends(get_db)):
     #Create a Stats object to return to the user
     testStats = Stats()
 
+    #This variable will be used in the userGames for loop to find the most recent game
+    latestGame = userGames[0][2]
+
     #Want to iterate over each row and come up with the stats
     for row in userGames:
         #Start with the easy stuff
         testStats.gamesPlayed += 1
         testStats.gamesWon += row[4]
         testStats.winPercentage = testStats.gamesWon / testStats.gamesPlayed
+
+        #Check if it is a more recent game
+        if row[2] > latestGame:
+            latestGame = row[2]
 
         #Conditions for enumerating guesses
         #If the game was actually a loss, add 1 to fail
@@ -85,8 +96,31 @@ def getUserStats(user_id, db: sqlite3.Connection = Depends(get_db)):
                 testStats.guesses.five += 1
             if guesses == 6:
                 testStats.guesses.six += 1
-    
+    #After the for loop is finished, we can calculate the average guesses per game
     testStats.averageGuesses = ((testStats.guesses.one * 1) + (testStats.guesses.two * 2) + (testStats.guesses.three * 3) + (testStats.guesses.four * 4) + (testStats.guesses.five * 5) + (testStats.guesses.six * 6) + (testStats.guesses.fail * 6)) / testStats.gamesPlayed
+
+    #Now all we need is streaks data
+    selectStreaks = db.execute("SELECT * FROM streaks WHERE user_id = :user_id", [user_id])
+    userStreaks = selectStreaks.fetchall()
+
+    #Check through all the user's streaks
+    for streak in userStreaks:
+        #Find the largest streak (max streak)
+        if streak[1] > testStats.maxStreak:
+            testStats.maxStreak = streak[1]
+
+        # We are going to say that the "current streak" will be determined
+        # by whether or not the most recent game was played on the same date as 
+        # the "end" of the most recent streak. If they are the same day,
+        # we use that streak value. If there is a more recent game, then the 
+        # streak is 1. Otherwise, it is 0 by default   
+        if latestGame == streak[3]:
+            testStats.currentStreak = streak[1]
+        elif latestGame > streak[3]:
+            testStats.currentStreak = 1
+    
+        # Unsure if we should set currentStreak to 0 if it is older than "Yesterday"
+        # We can implement later if needed.
 
     return testStats
 
@@ -95,7 +129,7 @@ def getLeaderWins(db: sqlite3.Connection = Depends(get_db)):
     #Select the top 10 winners according to wins in the wins view
     selectWinners = db.execute("SELECT * FROM wins ORDER BY wins DESC LIMIT 10")
     
-    #Throw the all in a list
+    #Throw them all in a list
     topWins = selectWinners.fetchall()
     #To assemble the leaderboard, here's a list
     leaderboard = []
