@@ -11,7 +11,6 @@ CREATE TABLE games(
     guesses INTEGER,
     won BOOLEAN,
     PRIMARY KEY(user_id, game_id),
-    FOREIGN KEY(user_id) REFERENCES users(user_id)
 );
 
 CREATE INDEX games_won_idx ON games(won);

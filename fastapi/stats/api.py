@@ -66,7 +66,7 @@ class Stats(BaseModel):
 #This is a fastapi Depends function that we can use to basically
 #plug in our db connection and DRY up our code quite a bit.
 #See it used in any of the API paths here
-def get_db(db_id):
+def get_db():
     if db_id == 0:
         with contextlib.closing(sqlite3.connect(settings.GAME_DATABASE1)) as db:
             db.row_factory = sqlite3.Row
@@ -126,7 +126,7 @@ async def root():
 
 
 @app.post("/stats/", status_code=status.HTTP_201_CREATED)
-def postGame(game: Game, db: sqlite3.Connection = Depends(get_db(1))):
+def postGame(game: Game, db: sqlite3.Connection = Depends(get_db())):
     #FYI: This function is almost entirely based off of Prof Avery's create_book function
     #We set the Game object to a dict now to make the db.execute line a bit cleaner
     g = dict(game)

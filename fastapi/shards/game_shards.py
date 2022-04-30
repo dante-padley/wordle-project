@@ -27,30 +27,30 @@ YEAR = 2022
 sqlite3.register_converter('GUID', lambda b: uuid.UUID(bytes_le=b))
 sqlite3.register_adapter(uuid.UUID, lambda u: u.bytes_le)
 
-conn1 = sqlite3.connect(DATABASE_GAME1, detect_types=sqlite3.PARSE_DECLTYPES)
-conn2 = sqlite3.connect(DATABASE_GAME2, detect_types=sqlite3.PARSE_DECLTYPES)
-conn3 = sqlite3.connect(DATABASE_GAME3, detect_types=sqlite3.PARSE_DECLTYPES)
-conn4 = sqlite3.connect(DATABASE_USER, detect_types=sqlite3.PARSE_DECLTYPES)
+# conn1 = sqlite3.connect(DATABASE_GAME1, detect_types=sqlite3.PARSE_DECLTYPES)
+# conn2 = sqlite3.connect(DATABASE_GAME2, detect_types=sqlite3.PARSE_DECLTYPES)
+# conn3 = sqlite3.connect(DATABASE_GAME3, detect_types=sqlite3.PARSE_DECLTYPES)
+# conn4 = sqlite3.connect(DATABASE_USER, detect_types=sqlite3.PARSE_DECLTYPES)
 
-with contextlib.closing(sqlite3.connect(DATABASE_USER)) as db:
+with contextlib.closing(sqlite3.connect(DATABASE_USER), detect_types=sqlite3.PARSE_DECLTYPES) as db:
     with open(USER_SCHEMA) as f:
         # print(f)
         db.executescript(f.read())
     db.commit()
 
-with contextlib.closing(sqlite3.connect(DATABASE_GAME1)) as db:
+with contextlib.closing(sqlite3.connect(DATABASE_GAME1, detect_types=sqlite3.PARSE_DECLTYPES)) as db:
     with open(GAME_SCHEMA) as f:
         # print(f)
         db.executescript(f.read())
     db.commit()
 
-with contextlib.closing(sqlite3.connect(DATABASE_GAME2)) as db:
+with contextlib.closing(sqlite3.connect(DATABASE_GAME2), detect_types=sqlite3.PARSE_DECLTYPES) as db:
     with open(GAME_SCHEMA) as f:
         # print(f)
         db.executescript(f.read())
     db.commit()
 
-with contextlib.closing(sqlite3.connect(DATABASE_GAME3)) as db:
+with contextlib.closing(sqlite3.connect(DATABASE_GAME3), detect_types=sqlite3.PARSE_DECLTYPES) as db:
     with open(GAME_SCHEMA) as f:
         # print(f)
         db.executescript(f.read())
