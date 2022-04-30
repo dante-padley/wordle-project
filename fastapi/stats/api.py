@@ -2,6 +2,7 @@ import re
 import sqlite3
 import contextlib
 from datetime import date
+import uuid
 
 from fastapi import FastAPI, Depends, Response, HTTPException, status
 from pydantic import BaseModel, BaseSettings, Field
@@ -14,10 +15,16 @@ from pydantic import BaseModel, BaseSettings, Field
 #If you want to add env variables to that file, make sure
 #to represent them here.
 class Settings(BaseSettings):
-    database: str
+    GAME_DATABASE1: str
+    GAME_DATABASE2: str
+    GAME_DATABASE3: str
+    USER_DATABASE: str
+    
     
     class Config:
-        env_file = "./stats/.env"
+        # env_file = "./stats/.env"
+        env_file = "./shards/.env"
+        
 
 
 #Game class to elegantly accept game submissions to the postGame path
@@ -59,10 +66,49 @@ class Stats(BaseModel):
 #This is a fastapi Depends function that we can use to basically
 #plug in our db connection and DRY up our code quite a bit.
 #See it used in any of the API paths here
-def get_db():
-    with contextlib.closing(sqlite3.connect(settings.database)) as db:
-        db.row_factory = sqlite3.Row
-        yield db
+def get_db(db_id):
+    if db_id == 0:
+        with contextlib.closing(sqlite3.connect(settings.GAME_DATABASE1)) as db:
+            db.row_factory = sqlite3.Row
+            yield db
+    elif db_id == 1:
+        with contextlib.closing(sqlite3.connect(settings.GAME_DATABASE1)) as db:
+            db.row_factory = sqlite3.Row
+            yield db
+    elif db_id == 2:
+        with contextlib.closing(sqlite3.connect(settings.GAME_DATABASE1)) as db:
+            db.row_factory = sqlite3.Row
+            yield db
+    else:
+        with contextlib.closing(sqlite3.connect(settings.GAME_DATABASE1)) as db:
+            db.row_factory = sqlite3.Row
+            yield db
+ 
+    
+# #This is a fastapi Depends function that we can use to basically
+# #plug in our db connection and DRY up our code quite a bit.
+# #See it used in any of the API paths here
+# def get_db():
+#     with contextlib.closing(sqlite3.connect(settings.GAME_DATABASE2)) as db:
+#         db.row_factory = sqlite3.Row
+#         yield db
+
+# #This is a fastapi Depends function that we can use to basically
+# #plug in our db connection and DRY up our code quite a bit.
+# #See it used in any of the API paths here
+# def get_db():
+#     with contextlib.closing(sqlite3.connect(settings.GAME_DATABASE3)) as db:
+#         db.row_factory = sqlite3.Row
+#         yield db
+
+# #This is a fastapi Depends function that we can use to basically
+# #plug in our db connection and DRY up our code quite a bit.
+# #See it used in any of the API paths here
+# def get_db():
+#     with contextlib.closing(sqlite3.connect(settings.USER_DATABASE)) as db:
+#         db.row_factory = sqlite3.Row
+#         yield db
+
 
 
 #IMPORTANT!!!
@@ -80,10 +126,11 @@ async def root():
 
 
 @app.post("/stats/", status_code=status.HTTP_201_CREATED)
-def postGame(game: Game, db: sqlite3.Connection = Depends(get_db)):
+def postGame(game: Game, db: sqlite3.Connection = Depends(get_db(1))):
     #FYI: This function is almost entirely based off of Prof Avery's create_book function
     #We set the Game object to a dict now to make the db.execute line a bit cleaner
     g = dict(game)
+    # print(g)
     #We use try so we can catch errors writing to the db
     try:
         stmt = db.execute(
@@ -100,7 +147,15 @@ def postGame(game: Game, db: sqlite3.Connection = Depends(get_db)):
             status_code=status.HTTP_409_CONFLICT,
             detail={"type": type(e).__name__, "msg": str(e)},
         )
+    # print(g["user_id"])
+    shard_id = g["user_id"] % 3
+    # print(shard_id)
+    for item in stmt:
+        print(item)
+        
     #g is already a dict, so just return it.
+    # shard_id = g["user_id"] // 3
+    
     return g
 
 
