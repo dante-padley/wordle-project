@@ -7,8 +7,8 @@ import sqlite3
 
 import faker
 
-DATABASE = './var/stats.db'
-SCHEMA = './share/stats.sql'
+DATABASE = './stats.db'
+SCHEMA = './stats.sql'
 
 NUM_STATS = 1_000_000
 NUM_USERS = 100_000
