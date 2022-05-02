@@ -22,15 +22,14 @@ class Settings(BaseSettings):
     
     
     class Config:
-        # env_file = "./stats/.env"
-        env_file = "./shards/.env"
+        env_file = "./stats/.env"
         
 
 
 #Game class to elegantly accept game submissions to the postGame path
 #Can be used in future operations
 class Game(BaseModel):
-    user_id: int
+    user_id: uuid.UUID
     game_id: int
     finished: date
     guesses: int
@@ -66,50 +65,24 @@ class Stats(BaseModel):
 #This is a fastapi Depends function that we can use to basically
 #plug in our db connection and DRY up our code quite a bit.
 #See it used in any of the API paths here
-def get_db():
-    if db_id == 0:
-        with contextlib.closing(sqlite3.connect(settings.GAME_DATABASE1)) as db:
-            db.row_factory = sqlite3.Row
-            yield db
-    elif db_id == 1:
-        with contextlib.closing(sqlite3.connect(settings.GAME_DATABASE1)) as db:
-            db.row_factory = sqlite3.Row
-            yield db
-    elif db_id == 2:
-        with contextlib.closing(sqlite3.connect(settings.GAME_DATABASE1)) as db:
-            db.row_factory = sqlite3.Row
-            yield db
-    else:
-        with contextlib.closing(sqlite3.connect(settings.GAME_DATABASE1)) as db:
-            db.row_factory = sqlite3.Row
-            yield db
+def get_db1():
+    with contextlib.closing(sqlite3.connect(settings.GAME_DATABASE1)) as db:
+        db.row_factory = sqlite3.Row
+        yield db
+
+def get_db2():
+    with contextlib.closing(sqlite3.connect(settings.GAME_DATABASE2)) as db:
+        db.row_factory = sqlite3.Row
+        yield db
+def get_db3():
+    with contextlib.closing(sqlite3.connect(settings.GAME_DATABASE3)) as db:
+        db.row_factory = sqlite3.Row
+        yield db
+def get_db4():
+    with contextlib.closing(sqlite3.connect(settings.USER_DATABASE)) as db:
+        db.row_factory = sqlite3.Row
+        yield db
  
-    
-# #This is a fastapi Depends function that we can use to basically
-# #plug in our db connection and DRY up our code quite a bit.
-# #See it used in any of the API paths here
-# def get_db():
-#     with contextlib.closing(sqlite3.connect(settings.GAME_DATABASE2)) as db:
-#         db.row_factory = sqlite3.Row
-#         yield db
-
-# #This is a fastapi Depends function that we can use to basically
-# #plug in our db connection and DRY up our code quite a bit.
-# #See it used in any of the API paths here
-# def get_db():
-#     with contextlib.closing(sqlite3.connect(settings.GAME_DATABASE3)) as db:
-#         db.row_factory = sqlite3.Row
-#         yield db
-
-# #This is a fastapi Depends function that we can use to basically
-# #plug in our db connection and DRY up our code quite a bit.
-# #See it used in any of the API paths here
-# def get_db():
-#     with contextlib.closing(sqlite3.connect(settings.USER_DATABASE)) as db:
-#         db.row_factory = sqlite3.Row
-#         yield db
-
-
 
 #IMPORTANT!!!
 #Can use the settings object to refer to environment variables 
@@ -126,11 +99,21 @@ async def root():
 
 
 @app.post("/stats/", status_code=status.HTTP_201_CREATED)
-def postGame(game: Game, db: sqlite3.Connection = Depends(get_db())):
+def postGame(game: Game, db1: sqlite3.Connection = Depends(get_db1), db2: sqlite3.Connection = Depends(get_db2), db3: sqlite3.Connection = Depends(get_db3)):
     #FYI: This function is almost entirely based off of Prof Avery's create_book function
     #We set the Game object to a dict now to make the db.execute line a bit cleaner
     g = dict(game)
-    # print(g)
+
+    db = None
+
+    shard_id = g["user_id"].int % 3
+    if shard_id == 0:
+        db = db1
+    elif shard_id == 1:
+        db = db2
+    else:
+        db = db3
+
     #We use try so we can catch errors writing to the db
     try:
         stmt = db.execute(
@@ -147,21 +130,25 @@ def postGame(game: Game, db: sqlite3.Connection = Depends(get_db())):
             status_code=status.HTTP_409_CONFLICT,
             detail={"type": type(e).__name__, "msg": str(e)},
         )
-    # print(g["user_id"])
-    shard_id = g["user_id"] % 3
-    # print(shard_id)
-    for item in stmt:
-        print(item)
-        
-    #g is already a dict, so just return it.
-    # shard_id = g["user_id"] // 3
     
     return g
 
 
 @app.get("/stats/user/{user_id}", response_model=Stats)
-def getUserStats(user_id, db: sqlite3.Connection = Depends(get_db)):
-    #Lets start by getting the games data for the user
+def getUserStats(user_id: uuid.UUID, db1: sqlite3.Connection = Depends(get_db1), db2: sqlite3.Connection = Depends(get_db2), db3: sqlite3.Connection = Depends(get_db3)):
+
+    #establishes proper database connection to the proper database shard
+    db = sqlite3.Connection()
+    shard_id = user_id.int % 3
+    if shard_id == 0:
+        db = db1
+    elif shard_id == 1:
+        db = db2
+    else:
+        db = db3
+
+   #Lets start by getting the games data for the user
+    
     selectUser = db.execute("Select * FROM games WHERE user_id = :user_id", [user_id])
     userGames = selectUser.fetchall()
 
@@ -235,19 +222,30 @@ def getUserStats(user_id, db: sqlite3.Connection = Depends(get_db)):
 
 
 @app.get("/stats/leaderboards/wins")
-def getLeaderWins(db: sqlite3.Connection = Depends(get_db)):
+def getLeaderWins(db4: sqlite3.Connection = Depends(get_db4), db1: sqlite3.Connection = Depends(get_db1), db2: sqlite3.Connection = Depends(get_db2), db3: sqlite3.Connection = Depends(get_db3)):
+    
+    
     #Select the top 10 winners according to wins in the wins view
-    selectWinners = db.execute("SELECT * FROM wins ORDER BY wins DESC LIMIT 10")
+    selectWinners1 = db1.execute("SELECT * FROM wins ORDER BY wins DESC LIMIT 10").fetchall()
+    selectWinners2 = db2.execute("SELECT * FROM wins ORDER BY wins DESC LIMIT 10").fetchall()
+    selectWinners3 = db3.execute("SELECT * FROM wins ORDER BY wins DESC LIMIT 10").fetchall()
     
     #Throw them all in a list
-    topWins = selectWinners.fetchall()
+    topWins = selectWinners1
+    topWins.extend(selectWinners2)
+    topWins.extend(selectWinners3)
+    topWins.sort(reverse=True)
+    #Listen....please don't look at this
+    for i in range(1,20):
+        topWins.pop()
+
     #To assemble the leaderboard, here's a list
     leaderboard = []
 
     #iterate through the top winners and grab their usernames
     for winner in topWins:
         #select current user's username
-        selectUser = db.execute("SELECT username FROM users WHERE user_id = :user_id", [winner[0]])
+        selectUser = db4.execute("SELECT username FROM users WHERE user_id = :user_id", [winner[0]])
         userRow = selectUser.fetchall()
         #assemble the object
         user = {"username": userRow[0][0], "wins": winner[1]}
@@ -258,19 +256,30 @@ def getLeaderWins(db: sqlite3.Connection = Depends(get_db)):
 
 
 @app.get("/stats/leaderboards/streaks")
-def getLeaderStreaks(db: sqlite3.Connection = Depends(get_db)):
-    #Select the top 10 winners according to wins in the wins view
-    selectStreaks = db.execute("SELECT * FROM streaks ORDER BY streak DESC LIMIT 10")
+def getLeaderStreaks(db4: sqlite3.Connection = Depends(get_db4), db1: sqlite3.Connection = Depends(get_db1), db2: sqlite3.Connection = Depends(get_db2), db3: sqlite3.Connection = Depends(get_db3)):
     
-    #Throw the all in a list
-    topStreaks = selectStreaks.fetchall()
+    
+    #Select the top 10 streaks according to wins in the wins view
+    selectWinners1 = db1.execute("SELECT * FROM wins ORDER BY streaks DESC LIMIT 10").fetchall()
+    selectWinners2 = db2.execute("SELECT * FROM wins ORDER BY streaks DESC LIMIT 10").fetchall()
+    selectWinners3 = db3.execute("SELECT * FROM wins ORDER BY streaks DESC LIMIT 10").fetchall()
+    
+    #Throw them all in a list
+    topStreaks = selectWinners1
+    topStreaks.extend(selectWinners2)
+    topStreaks.extend(selectWinners3)
+    topStreaks.sort(reverse=True)
+    #Listen....please don't look at this
+    for i in range(1,20):
+        topStreaks.pop()
+
     #To assemble the leaderboard, here's a list
     leaderboard = []
 
     #iterate through the top winners and grab their usernames
     for streak in topStreaks:
         #select current user's username
-        selectUser = db.execute("SELECT username FROM users WHERE user_id = :user_id", [streak[0]])
+        selectUser = db4.execute("SELECT username FROM users WHERE user_id = :user_id", [streak[0]])
         userRow = selectUser.fetchall()
         #assemble the object
         user = {"username": userRow[0][0], "streak": streak[1]}

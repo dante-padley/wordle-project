@@ -1,0 +1,45 @@
+[http]
+  [http.middlewares]
+
+    [http.middlewares.answerchecking-stripprefix.stripPrefix]
+      prefixes = ["/word-validation"]
+
+  [http.routers]
+
+    [http.routers.answerchecking-http]
+      entryPoints = ["http"]
+      service = "answerchecking"
+      rule = "PathPrefix(`/api/v1`)"
+      middlewares = ["api-stripprefix"]
+
+    [http.routers.wordvalidation-http]
+      entryPoints = ["http"]
+      service = "wordvalidation"
+      rule = "PathPrefix(`/api/v1`)"
+      middlewares = ["api-stripprefix"]
+
+    [http.routers.stats-http]
+      entryPoints = ["http"]
+      service = "stats"
+      rule = "PathPrefix(`/api/v1`)"
+      middlewares = ["api-stripprefix"]
+
+  [http.services]
+    [http.services.answerchecking]
+      [http.services.answerchecking.loadBalancer]
+        [[http.services.answerchecking.servers]]
+          url = "http://127.0.0.1:5100"
+
+    [http.services.wordvalidation]
+      [http.services.wordvalidation.loadBalancer]
+        [[http.services.wordvalidation.servers]]
+          url = "http://127.0.0.1:5000"
+
+    [http.services.stats]
+      [http.services.stats.loadBalancer]
+        [[http.services.stats.loadBalancer.servers]]
+          url = "http://127.0.0.1:5200"
+        [[http.services.app.loadBalancer.servers]]
+          url = "http://127.0.0.1:5201"
+        [[http.services.app.loadBalancer.servers]]
+          url = "http://127.0.0.1:5202"

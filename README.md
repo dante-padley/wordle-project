@@ -1,6 +1,22 @@
 # wordle-project
 ## Nathan Eduvala, Marcellus Jones, Hoang Long Nguyen, Dante Padley
 
+# Project 3 Responsibilites
+1. Creating Initial service with single db
+- Dante Padley
+2. Sharding and service modifications
+- Nathan Eduvala
+- Hoang Long Nguyen
+- Dante Padley
+3. Load balancing
+- Marcellus
+
+### PROJECT 3 INITIALIZATION
+
+
+
+
+
 
 1. Initialization
 To get the list of wordle answers, run the following:
@@ -47,4 +63,4 @@ script:
 2. Execution
 To start the services, run the following foreman command in the fastapi directory:
 
-`foreman start`
+`foreman start --formation all=1,stats=3`

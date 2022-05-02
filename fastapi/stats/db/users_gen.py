@@ -27,7 +27,7 @@ random.seed(YEAR)
 fake = faker.Faker()
 fake.seed(YEAR)
 
-with contextlib.closing(sqlite3.connect(USER_DB)) as db:
+with contextlib.closing(sqlite3.connect(USER_DB, detect_types=sqlite3.PARSE_DECLTYPES)) as db:
     with open(USER_SCHEMA) as f:
         db.executescript(f.read())
     for _ in range(NUM_USERS):
