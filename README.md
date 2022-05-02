@@ -13,7 +13,29 @@
 
 ### PROJECT 3 INITIALIZATION
 
+Database setup:
 
+Navigate to the stats service db directory
+
+`cd ./fastapi/stats/db/`
+
+Create the base db
+
+`python3 stats.py`
+
+Shard the db
+
+`python3 sharding_script.py`
+
+### PROJECT 3 EXECUTION
+
+Navigate to the fastapi directory
+
+`cd ./fastapi`
+
+Run foreman exactly like this:
+
+`foreman start --formation all=1,stats=3`
 
 
 

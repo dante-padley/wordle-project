@@ -7,6 +7,9 @@ import uuid
 from fastapi import FastAPI, Depends, Response, HTTPException, status
 from pydantic import BaseModel, BaseSettings, Field
 
+sqlite3.register_converter('GUID', lambda b: uuid.UUID(bytes_le=b))
+sqlite3.register_adapter(uuid.UUID, lambda u: u.bytes_le)
+
 
 #!!! IMPORTANT !!!
 #.env file in this directory contains environment variables.
@@ -103,15 +106,14 @@ def postGame(game: Game, db1: sqlite3.Connection = Depends(get_db1), db2: sqlite
     #FYI: This function is almost entirely based off of Prof Avery's create_book function
     #We set the Game object to a dict now to make the db.execute line a bit cleaner
     g = dict(game)
-
     db = None
 
-    shard_id = g["user_id"].int % 3
+    shard_id = g['user_id'].int % 3
     if shard_id == 0:
         db = db1
     elif shard_id == 1:
         db = db2
-    else:
+    elif shard_id == 2:
         db = db3
 
     #We use try so we can catch errors writing to the db
@@ -138,7 +140,7 @@ def postGame(game: Game, db1: sqlite3.Connection = Depends(get_db1), db2: sqlite
 def getUserStats(user_id: uuid.UUID, db1: sqlite3.Connection = Depends(get_db1), db2: sqlite3.Connection = Depends(get_db2), db3: sqlite3.Connection = Depends(get_db3)):
 
     #establishes proper database connection to the proper database shard
-    db = sqlite3.Connection()
+    db = None
     shard_id = user_id.int % 3
     if shard_id == 0:
         db = db1
@@ -234,9 +236,12 @@ def getLeaderWins(db4: sqlite3.Connection = Depends(get_db4), db1: sqlite3.Conne
     topWins = selectWinners1
     topWins.extend(selectWinners2)
     topWins.extend(selectWinners3)
-    topWins.sort(reverse=True)
-    #Listen....please don't look at this
-    for i in range(1,20):
+
+    #Sort the list in descending order
+    topWins = sorted(topWins, key=lambda item: item['wins'], reverse=True)
+
+    #pop off the bottom 20, we want top 10
+    for i in range(0,20):
         topWins.pop()
 
     #To assemble the leaderboard, here's a list
@@ -260,17 +265,21 @@ def getLeaderStreaks(db4: sqlite3.Connection = Depends(get_db4), db1: sqlite3.Co
     
     
     #Select the top 10 streaks according to wins in the wins view
-    selectWinners1 = db1.execute("SELECT * FROM wins ORDER BY streaks DESC LIMIT 10").fetchall()
-    selectWinners2 = db2.execute("SELECT * FROM wins ORDER BY streaks DESC LIMIT 10").fetchall()
-    selectWinners3 = db3.execute("SELECT * FROM wins ORDER BY streaks DESC LIMIT 10").fetchall()
+    selectWinners1 = db1.execute("SELECT * FROM streaks ORDER BY streak DESC LIMIT 10").fetchall()
+    selectWinners2 = db2.execute("SELECT * FROM streaks ORDER BY streak DESC LIMIT 10").fetchall()
+    selectWinners3 = db3.execute("SELECT * FROM streaks ORDER BY streak DESC LIMIT 10").fetchall()
     
     #Throw them all in a list
     topStreaks = selectWinners1
     topStreaks.extend(selectWinners2)
     topStreaks.extend(selectWinners3)
-    topStreaks.sort(reverse=True)
-    #Listen....please don't look at this
-    for i in range(1,20):
+
+    #Sort the list in descending order
+    topStreaks = sorted(topStreaks, key=lambda item: item['streak'], reverse=True)
+
+
+    #Remove the bottom 20, we only want 10
+    for i in range(0,20):
         topStreaks.pop()
 
     #To assemble the leaderboard, here's a list
@@ -286,4 +295,4 @@ def getLeaderStreaks(db4: sqlite3.Connection = Depends(get_db4), db1: sqlite3.Co
         #toss it in the leaderboard
         leaderboard.append(user)
         
-    return {"Top10Winners": leaderboard}
+    return {"Top10Streaks": leaderboard}
