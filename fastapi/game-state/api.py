@@ -1,21 +1,21 @@
 from typing import List
 import uuid
+import redis
 
 from fastapi import FastAPI, Depends, Response, HTTPException, status
 from pydantic import BaseModel, BaseSettings, Field
 
-class Settings(BaseSettings):
-    DATABASE: str
-
-    class Config:
-        env_file = "./game-state/.env"
-
-#Need to write this GameState object once we design the database
 class GameState(BaseModel):
     guesses: list
+    remaining: int
 
-settings = Settings()
+r = redis.Redis()
 app = FastAPI()
+
+
+@app.get("/")
+async def root():
+    return{"message":"What in the world?"}
 
 #Starting a new game. The client should supply a user ID and game ID
 #when a game starts. If the user has already played the game, they should receive an error
