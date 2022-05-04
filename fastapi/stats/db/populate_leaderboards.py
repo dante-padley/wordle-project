@@ -65,14 +65,3 @@ for streak in topStreaks:
 
 r.zadd("WinnerLeaderboard", winnerLeaderboard)
 r.zadd("StreakLeaderboard", streakLeaderboard)
-
-winnerLeaders = r.zrevrangebyscore("WinnerLeaderboard", min='-inf', max='+inf', withscores=True)
-winnerLeaders = winnerLeaders[:10]
-leaderboard = []
-for item in winnerLeaders:
-    item = list(item)
-    item[0] = item[0].decode("utf-8")
-    leaderboard.append({"username": item[0], "wins": int(item[1])})
-
-
-print(leaderboard)

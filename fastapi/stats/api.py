@@ -250,7 +250,7 @@ def getLeaderStreaks():
     r = redis.Redis(port=6381)
 
     #grab the full leaderboard 
-    streakLeaders = r.zrevrangebyscore("WinnerLeaderboard", min='-inf', max='+inf', withscores=True)
+    streakLeaders = r.zrevrangebyscore("StreakLeaderboard", min='-inf', max='+inf', withscores=True)
     #cut it to top 10
     streakLeaders = streakLeaders[:10]
     #A little bit of processing. Data needs to be decoded from bytes and arranged in a list of dicts
