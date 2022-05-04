@@ -11,6 +11,28 @@
 3. Load balancing
 - Marcellus
 
+### PROJECT 4 INITIALIZATION
+
+Cron job setup:
+
+Navigate to the fastapi director
+
+`cd ./fastapi`
+
+Run the cronjob setup script
+
+`sh ./cron-scheduler.sh`
+
+### PROJECT 4 EXECUTION
+
+Navigate to the fastapi directory
+
+`cd ./fastapi`
+
+Run foreman exactly like this:
+
+`foreman start --formation all=1,stats=3`
+
 ### PROJECT 3 INITIALIZATION
 
 Database setup:
