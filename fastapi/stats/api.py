@@ -1,9 +1,10 @@
 import re
 import sqlite3
 import contextlib
-from datetime import date
 import uuid
+import redis
 
+from datetime import date
 from fastapi import FastAPI, Depends, Response, HTTPException, status
 from pydantic import BaseModel, BaseSettings, Field
 
@@ -224,75 +225,39 @@ def getUserStats(user_id: uuid.UUID, db1: sqlite3.Connection = Depends(get_db1),
 
 
 @app.get("/stats/leaderboards/wins")
-def getLeaderWins(db4: sqlite3.Connection = Depends(get_db4), db1: sqlite3.Connection = Depends(get_db1), db2: sqlite3.Connection = Depends(get_db2), db3: sqlite3.Connection = Depends(get_db3)):
+def getLeaderWins():
     
-    
-    #Select the top 10 winners according to wins in the wins view
-    selectWinners1 = db1.execute("SELECT * FROM wins ORDER BY wins DESC LIMIT 10").fetchall()
-    selectWinners2 = db2.execute("SELECT * FROM wins ORDER BY wins DESC LIMIT 10").fetchall()
-    selectWinners3 = db3.execute("SELECT * FROM wins ORDER BY wins DESC LIMIT 10").fetchall()
-    
-    #Throw them all in a list
-    topWins = selectWinners1
-    topWins.extend(selectWinners2)
-    topWins.extend(selectWinners3)
+    r = redis.Redis(port=6381)
 
-    #Sort the list in descending order
-    topWins = sorted(topWins, key=lambda item: item['wins'], reverse=True)
-
-    #pop off the bottom 20, we want top 10
-    for i in range(0,20):
-        topWins.pop()
-
-    #To assemble the leaderboard, here's a list
+    #grab the full leaderboard 
+    winnerLeaders = r.zrevrangebyscore("WinnerLeaderboard", min='-inf', max='+inf', withscores=True)
+    #cut it to top 10
+    winnerLeaders = winnerLeaders[:10]
+    #A little bit of processing. Data needs to be decoded from bytes and arranged in a list of dicts
     leaderboard = []
+    for item in winnerLeaders:
+        item = list(item)
+        item[0] = item[0].decode("utf-8")
+        leaderboard.append({"username": item[0], "wins": int(item[1])})
 
-    #iterate through the top winners and grab their usernames
-    for winner in topWins:
-        #select current user's username
-        selectUser = db4.execute("SELECT username FROM users WHERE user_id = :user_id", [winner[0]])
-        userRow = selectUser.fetchall()
-        #assemble the object
-        user = {"username": userRow[0][0], "wins": winner[1]}
-        #toss it in the leaderboard
-        leaderboard.append(user)
 
     return {"Top10Winners": leaderboard}
 
 
 @app.get("/stats/leaderboards/streaks")
-def getLeaderStreaks(db4: sqlite3.Connection = Depends(get_db4), db1: sqlite3.Connection = Depends(get_db1), db2: sqlite3.Connection = Depends(get_db2), db3: sqlite3.Connection = Depends(get_db3)):
+def getLeaderStreaks():
     
-    
-    #Select the top 10 streaks according to wins in the wins view
-    selectWinners1 = db1.execute("SELECT * FROM streaks ORDER BY streak DESC LIMIT 10").fetchall()
-    selectWinners2 = db2.execute("SELECT * FROM streaks ORDER BY streak DESC LIMIT 10").fetchall()
-    selectWinners3 = db3.execute("SELECT * FROM streaks ORDER BY streak DESC LIMIT 10").fetchall()
-    
-    #Throw them all in a list
-    topStreaks = selectWinners1
-    topStreaks.extend(selectWinners2)
-    topStreaks.extend(selectWinners3)
+    r = redis.Redis(port=6381)
 
-    #Sort the list in descending order
-    topStreaks = sorted(topStreaks, key=lambda item: item['streak'], reverse=True)
-
-
-    #Remove the bottom 20, we only want 10
-    for i in range(0,20):
-        topStreaks.pop()
-
-    #To assemble the leaderboard, here's a list
+    #grab the full leaderboard 
+    streakLeaders = r.zrevrangebyscore("WinnerLeaderboard", min='-inf', max='+inf', withscores=True)
+    #cut it to top 10
+    streakLeaders = streakLeaders[:10]
+    #A little bit of processing. Data needs to be decoded from bytes and arranged in a list of dicts
     leaderboard = []
+    for item in streakLeaders:
+        item = list(item)
+        item[0] = item[0].decode("utf-8")
+        leaderboard.append({"username": item[0], "wins": int(item[1])})
 
-    #iterate through the top winners and grab their usernames
-    for streak in topStreaks:
-        #select current user's username
-        selectUser = db4.execute("SELECT username FROM users WHERE user_id = :user_id", [streak[0]])
-        userRow = selectUser.fetchall()
-        #assemble the object
-        user = {"username": userRow[0][0], "streak": streak[1]}
-        #toss it in the leaderboard
-        leaderboard.append(user)
-        
     return {"Top10Streaks": leaderboard}
