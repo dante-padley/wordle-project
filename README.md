@@ -9,7 +9,7 @@
 - Hoang Long Nguyen
 - Dante Padley
 3. Load balancing
-- Marcellus
+- Dante
 
 ### PROJECT 4 INITIALIZATION
 
