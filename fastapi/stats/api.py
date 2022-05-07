@@ -23,10 +23,10 @@ class Settings(BaseSettings):
     GAME_DATABASE2: str
     GAME_DATABASE3: str
     USER_DATABASE: str
-    
+    LEADERBOARD_KEYSTORE: int
     
     class Config:
-        env_file = "./stats/.env"
+        env_file = "./.env"
         
 
 
@@ -227,7 +227,7 @@ def getUserStats(user_id: uuid.UUID, db1: sqlite3.Connection = Depends(get_db1),
 @app.get("/stats/leaderboards/wins")
 def getLeaderWins():
     
-    r = redis.Redis(port=6381)
+    r = redis.Redis(port=settings.LEADERBOARD_KEYSTORE)
 
     #grab the full leaderboard 
     winnerLeaders = r.zrevrangebyscore("WinnerLeaderboard", min='-inf', max='+inf', withscores=True)
@@ -247,7 +247,7 @@ def getLeaderWins():
 @app.get("/stats/leaderboards/streaks")
 def getLeaderStreaks():
     
-    r = redis.Redis(port=6381)
+    r = redis.Redis(port=settings.LEADERBOARD_KEYSTORE)
 
     #grab the full leaderboard 
     streakLeaders = r.zrevrangebyscore("StreakLeaderboard", min='-inf', max='+inf', withscores=True)
