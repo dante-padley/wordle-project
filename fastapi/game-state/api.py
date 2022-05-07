@@ -11,12 +11,9 @@ class Settings(BaseSettings):
     class Config:
         env_file = "./.env"
 
-class GameState(BaseModel):
-    guesses: list
-    remaining: int
 
-app = FastAPI()
 settings = Settings()
+app = FastAPI()
 
 @app.get("/")
 async def root():
@@ -24,9 +21,12 @@ async def root():
 
 @app.post("/game-state/newgame")
 def newGame(user_id: uuid.UUID, game_id: int):
-    r = redis.Redis(port = int(settings.GAME_STATE_KEYSTORE))
+
+    r = redis.Redis(port=settings.GAME_STATE_KEYSTORE)
+
     game_key = "user:" + str(user_id) + ":game:" + str(game_id)
-    if (r.get(game_key) == None):
+
+    if (r.exists(game_key) == 0):
         r.hset(game_key, "remaining", "6")
         return
     else:
@@ -43,7 +43,7 @@ def newGame(user_id: uuid.UUID, game_id: int):
 
 @app.post("/game-state/newguess")
 def newGuess(user_id: uuid.UUID, game_id: int, guess: str):
-    r = redis.Redis(port = settings.GAME_STATE_KEYSTORE)
+    r = redis.Redis(port=settings.GAME_STATE_KEYSTORE)
     game_key = "user:" + str(user_id) + ":game:" + str(game_id)
     if (int(r.hget(game_key, "remaining")) > 0):
         guess_number = 7 - int(r.hget(game_key, "remaining"))

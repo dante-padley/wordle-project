@@ -1,15 +1,22 @@
 # wordle-project
-## Nathan Eduvala, Marcellus Jones, Hoang Long Nguyen, Dante Padley
+## Nathan Eduvala, Hoang Long Nguyen, Dante Padley
 
-# Project 3 Responsibilites
-1. Creating Initial service with single db
-- Dante Padley
-2. Sharding and service modifications
-- Nathan Eduvala
-- Hoang Long Nguyen
-- Dante Padley
-3. Load balancing
-- Dante
+### Project 4 Responsibilites
+
+## game-state api service
+Nathan Eduvala
+
+## leaderboard from sqlite shards to redis script
+Dante
+
+## changes to stats service to use redis for leaderboards
+Dante
+
+## Cron generation script
+Dante
+
+## redis setup
+Dante
 
 ### PROJECT 4 INITIALIZATION
 
@@ -48,16 +55,6 @@ Create the base db
 Shard the db
 
 `python3 sharding_script.py`
-
-### PROJECT 3 EXECUTION
-
-Navigate to the fastapi directory
-
-`cd ./fastapi`
-
-Run foreman exactly like this:
-
-`foreman start --formation all=1,stats=3`
 
 
 

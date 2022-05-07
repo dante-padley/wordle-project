@@ -13,6 +13,7 @@ class Settings(BaseSettings):
     GAME_DATABASE2: str
     GAME_DATABASE3: str
     USER_DATABASE: str
+    LEADERBOARD_KEYSTORE: int
     class Config:
         env_file = "./stats/.env"
 
@@ -23,7 +24,7 @@ db2 = sqlite3.connect(settings.GAME_DATABASE2, detect_types=sqlite3.PARSE_DECLTY
 db3 = sqlite3.connect(settings.GAME_DATABASE3, detect_types=sqlite3.PARSE_DECLTYPES)
 db4 = sqlite3.connect(settings.USER_DATABASE, detect_types=sqlite3.PARSE_DECLTYPES)
 
-r = redis.Redis(port=6381)
+r = redis.Redis(port=settings.LEADERBOARD_KEYSTORE)
 
 selectWinners1 = db1.execute("SELECT * FROM wins ORDER BY wins DESC LIMIT 10").fetchall()
 selectWinners2 = db2.execute("SELECT * FROM wins ORDER BY wins DESC LIMIT 10").fetchall()
