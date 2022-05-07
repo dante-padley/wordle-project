@@ -7,16 +7,16 @@
 Nathan Eduvala
 
 ## leaderboard from sqlite shards to redis script
-Dante
+Dante Padley
 
 ## changes to stats service to use redis for leaderboards
-Dante
+Dante Padley
 
 ## Cron generation script
-Dante
+Dante Padley
 
 ## redis setup
-Dante
+Dante Padley
 
 ### PROJECT 4 INITIALIZATION
 
