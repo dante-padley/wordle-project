@@ -13,6 +13,9 @@
     [http.middlewares.game-state-stripprefix.stripPrefix]
       prefixes = ["/api/game-state"]
 
+    [http.middlewares.game-stripprefix.stripPrefix]
+      prefixes = ["/api/game"]
+
   [http.routers]
 
     [http.routers.word-validation-http]
@@ -39,6 +42,12 @@
       rule = "PathPrefix(`/api/game-state`)"
       middlewares = ["game-state-stripprefix"]
 
+    [http.routers.game-http]
+      entryPoints = ["http"]
+      service = "game"
+      rule = "PathPrefix(`/api/game`)"
+      middlewares = ["game-stripprefix"]
+
   [http.services]
 
     [http.services.word-validation]
@@ -64,3 +73,8 @@
       [http.services.game-state.loadBalancer]
         [[http.services.game-state.loadBalancer.servers]]
           url = "http://127.0.0.1:5300"
+
+    [http.services.game]
+      [http.services.game.loadBalancer]
+        [[http.services.game.loadBalancer.servers]]
+          url = "http://127.0.0.1:5400"
