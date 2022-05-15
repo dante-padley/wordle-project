@@ -70,20 +70,20 @@ class Stats(BaseModel):
 #plug in our db connection and DRY up our code quite a bit.
 #See it used in any of the API paths here
 def get_db1():
-    with contextlib.closing(sqlite3.connect(settings.GAME_DATABASE1)) as db:
+    with contextlib.closing(sqlite3.connect(settings.GAME_DATABASE1, detect_types=sqlite3.PARSE_DECLTYPES)) as db:
         db.row_factory = sqlite3.Row
         yield db
 
 def get_db2():
-    with contextlib.closing(sqlite3.connect(settings.GAME_DATABASE2)) as db:
+    with contextlib.closing(sqlite3.connect(settings.GAME_DATABASE2, detect_types=sqlite3.PARSE_DECLTYPES)) as db:
         db.row_factory = sqlite3.Row
         yield db
 def get_db3():
-    with contextlib.closing(sqlite3.connect(settings.GAME_DATABASE3)) as db:
+    with contextlib.closing(sqlite3.connect(settings.GAME_DATABASE3, detect_types=sqlite3.PARSE_DECLTYPES)) as db:
         db.row_factory = sqlite3.Row
         yield db
 def get_db4():
-    with contextlib.closing(sqlite3.connect(settings.USER_DATABASE)) as db:
+    with contextlib.closing(sqlite3.connect(settings.USER_DATABASE, detect_types=sqlite3.PARSE_DECLTYPES)) as db:
         db.row_factory = sqlite3.Row
         yield db
  
@@ -136,6 +136,14 @@ def postGame(game: Game, db1: sqlite3.Connection = Depends(get_db1), db2: sqlite
     
     return g
 
+@app.get("/stats/username/{username}")
+def getUserID(username: str, db: sqlite3.Connection = Depends(get_db4)):
+    selectUser = db.execute("Select user_id FROM users WHERE username = :username", [username])
+    user_id = selectUser.fetchone()
+    user_id = user_id[0]
+
+    data = {"username": username, "user_id": user_id}
+    return data
 
 @app.get("/stats/user/{user_id}", response_model=Stats)
 def getUserStats(user_id: uuid.UUID, db1: sqlite3.Connection = Depends(get_db1), db2: sqlite3.Connection = Depends(get_db2), db3: sqlite3.Connection = Depends(get_db3)):
