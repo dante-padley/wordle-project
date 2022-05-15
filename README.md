@@ -1,22 +1,20 @@
 # wordle-project
-## Nathan Eduvala, Hoang Long Nguyen, Dante Padley
+## Dante Padley, Jay Patel, Robin Khiv, Rohan Patwardhan
 
-### Project 4 Responsibilites
+### API browser endpoints
 
-## game-state api service
-Nathan Eduvala
+The project serves to 127.0.0.1:9999
 
-## leaderboard from sqlite shards to redis script
-Dante Padley
+All services live in the 127.0.0.1:9999/api path
 
-## changes to stats service to use redis for leaderboards
-Dante Padley
+The entire list of services:
+- /answer-checking
+- /word-validation
+- /stats
+- /game-state
+- /game
 
-## Cron generation script
-Dante Padley
-
-## redis setup
-Dante Padley
+**To test the apis in the browser, go to the desired endpoint and add /docs (i.e. 127.0.0.1:9999/api/game/docs)**
 
 ### PROJECT 4 INITIALIZATION
 
