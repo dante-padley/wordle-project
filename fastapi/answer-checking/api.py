@@ -1,12 +1,18 @@
 import re
 import sqlite3
-import datetime
+
 from datetime import date, datetime
 from fastapi import FastAPI
+from pydantic import BaseSettings, Field, BaseModel
 
+class Settings(BaseSettings):
+    STARTDATE: str
+    
+    class Config:
+        env_file = "./.env"
 
 app = FastAPI()
-
+settings = Settings()
 
 
 @app.get("/")
@@ -17,8 +23,7 @@ async def root():
 @app.get("/answer/check/{word}")
 def checkAnswer(word):
     db = sqlite3.Connection('./answer-checking/db/answers.db')
-
-    wordleStartDate = date(2021, 6, 19)
+    wordleStartDate = date.fromisoformat(settings.STARTDATE)
     today = date.today()
     diff = today - wordleStartDate
     diffDays = diff.days
@@ -29,8 +34,8 @@ def checkAnswer(word):
     #print(todaysWord)
     word_array = []
     answer = todaysWord[0][1]
-    print(answer)
-    print(word)
+    # print(answer)
+    # print(word)
     count = 0
     for x in word:
         z=0
