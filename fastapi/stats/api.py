@@ -102,7 +102,7 @@ async def root():
     return {"message": "What a world!"}
 
 
-@app.post("/stats/", status_code=status.HTTP_201_CREATED)
+@app.post("/", status_code=status.HTTP_201_CREATED)
 def postGame(game: Game, db1: sqlite3.Connection = Depends(get_db1), db2: sqlite3.Connection = Depends(get_db2), db3: sqlite3.Connection = Depends(get_db3)):
     #FYI: This function is almost entirely based off of Prof Avery's create_book function
     #We set the Game object to a dict now to make the db.execute line a bit cleaner
@@ -136,7 +136,7 @@ def postGame(game: Game, db1: sqlite3.Connection = Depends(get_db1), db2: sqlite
     
     return g
 
-@app.get("/stats/username/{username}")
+@app.get("/username/{username}")
 def getUserID(username: str, db: sqlite3.Connection = Depends(get_db4)):
     selectUser = db.execute("Select user_id FROM users WHERE username = :username", [username])
     user_id = selectUser.fetchone()
@@ -145,7 +145,7 @@ def getUserID(username: str, db: sqlite3.Connection = Depends(get_db4)):
     data = {"username": username, "user_id": user_id}
     return data
 
-@app.get("/stats/user/{user_id}", response_model=Stats)
+@app.get("/user/{user_id}", response_model=Stats)
 def getUserStats(user_id: uuid.UUID, db1: sqlite3.Connection = Depends(get_db1), db2: sqlite3.Connection = Depends(get_db2), db3: sqlite3.Connection = Depends(get_db3)):
 
     #establishes proper database connection to the proper database shard
@@ -232,7 +232,7 @@ def getUserStats(user_id: uuid.UUID, db1: sqlite3.Connection = Depends(get_db1),
     return testStats
 
 
-@app.get("/stats/leaderboards/wins")
+@app.get("/leaderboards/wins")
 def getLeaderWins():
     
     r = redis.Redis(port=settings.LEADERBOARD_KEYSTORE)
@@ -252,7 +252,7 @@ def getLeaderWins():
     return {"Top10Winners": leaderboard}
 
 
-@app.get("/stats/leaderboards/streaks")
+@app.get("/leaderboards/streaks")
 def getLeaderStreaks():
     
     r = redis.Redis(port=settings.LEADERBOARD_KEYSTORE)

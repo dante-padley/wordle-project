@@ -6,8 +6,8 @@ from pydantic import BaseModel, BaseSettings, Field
 
 app = FastAPI()
 
-@app.post("/game/new")
-def newGame():
+@app.post("/new")
+def newGame(username: str):
     # Okay so there are 2 basic scenarios for this
     # The user has not started today's game
     # The user has started today's game
@@ -24,9 +24,13 @@ def newGame():
     # which is (for now) just the output from /game-state/{user_id}/{game_id}
     # We might include the "status" line for consistency and just base it off 
     # of the remaining guesses number
+    url = 'http://127.0.0.1:9999/api/stats/username/' + username
+    r = httpx.get(url)
+    user_id = r.json()["user_id"]
 
+    
     return []
 
-@app.post("/game/{game_id}")
+@app.post("/{game_id}")
 def newGuess():
     return []
