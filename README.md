@@ -1,5 +1,5 @@
 # wordle-project
-## Dante Padley, Jay Patel, Robin Khiv, Rohan Patwardhan
+## forked project from Dante Padley, Jay Patel, Robin Khiv, Rohan Patwardhan
 
 ### API browser endpoints
 
