@@ -87,7 +87,7 @@ def newGame(username: str):
             checkanswerurl = 'http://127.0.0.1:9999/api/answer-checking/answer/check/' + lastguess
             u = httpx.get(checkanswerurl)
             print(u.json())
-            for i in range(1, 5):
+            for i in range(0, 5):
                 letterscore = u.json()["accuracy"][i]
                 if (letterscore == 1):
                     letters["present"].append(lastguess[i])
@@ -127,7 +127,7 @@ def newGuess(game_id: int, guess: str, user_id: str):
             u = httpx.get(checkanswerurl)
             letters = {"correct": [], "present": []}
 
-            for i in range(1, 5):
+            for i in range(0, 5):
                 letterscore = u.json()["accuracy"][i]
                 if (letterscore == 1):
                     letters["present"].append(guess[i])
@@ -137,7 +137,29 @@ def newGuess(game_id: int, guess: str, user_id: str):
             #Record the win
             #Return the user’s score
             if len(letters['correct']) == 5:
-                return "correct"
+                 #Record the win 
+
+                recordwinurl = 'http://127.0.0.1:9999/api/stats/' 
+
+                guesses = 6 - updatedGuesses 
+
+                params = {"user_id": user_id, "game_id": game_id, "finished": date.today(), "guesses": guesses, "won": True} 
+
+                s = httpx.post(recordwinurl, params=params) 
+
+                responseObj.update({"status": "win", "remaining": updatedGuesses}) 
+
+                #Return users score 
+
+                scoreurl = 'http://127.0.0.1:9999/api/stats/user/' + user_id 
+
+                scores = httpx.get(scoreurl) 
+
+                responseObj.update(scores.json()) 
+
+                return responseObj 
+                #return "correct"
+
             #If the guess is incorrect and no guesses remain…
             elif len(letters['correct']) < 5 and updatedGuesses == 0:
                 return "wrong"
