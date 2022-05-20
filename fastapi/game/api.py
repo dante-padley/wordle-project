@@ -162,7 +162,17 @@ def newGuess(game_id: int, guess: str, user_id: str):
 
             #If the guess is incorrect and no guesses remain…
             elif len(letters['correct']) < 5 and updatedGuesses == 0:
-                return "wrong"
+                recordlossurl = 'http://127.0.0.1:9999/api/stats/'
+                guesses = updatedGuesses
+                params = {"user_id": user_id, "game_id": game_id, "finished": date.today(), "guesses": guesses, "won": False}
+                s = httpx.post(recordlossurl, params=params)
+
+                responseObj.update({"status": "loss", "remaining": updatedGuesses})    
+                #Return users score
+                scoreurl = 'http://127.0.0.1:9999/api/stats/user/' + user_id
+                scores = httpx.get(scoreurl)
+                responseObj.update(scores.json())
+                return responseObj
 
             #If the guess is incorrect and additional guesses remain
             else:
