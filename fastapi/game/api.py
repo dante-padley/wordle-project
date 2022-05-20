@@ -7,7 +7,7 @@ from pydantic import BaseModel, BaseSettings, Field
 
 class Settings(BaseSettings):
     STARTDATE: str
-    
+
     class Config:
         env_file = "./.env"
 
@@ -30,7 +30,7 @@ def newGame(username: str):
     #
     # If the user has started, we respond with their game status
     # which is (for now) just the output from /game-state/{user_id}/{game_id}
-    # We might include the "status" line for consistency and just base it off 
+    # We might include the "status" line for consistency and just base it off
     # of the remaining guesses number
 
     # Start off by getting the user's id
@@ -38,7 +38,7 @@ def newGame(username: str):
     r = httpx.get(url)
     user_id = r.json()["user_id"]
 
-    # This is our calculation for today's wordle number and game_id. 
+    # This is our calculation for today's wordle number and game_id.
     # Ideally this would be in a module of its own and included at the top
     wordleStartDate = date.fromisoformat(settings.STARTDATE)
     today = date.today()
@@ -49,7 +49,7 @@ def newGame(username: str):
     newgameurl = 'http://127.0.0.1:9999/api/game-state/newgame'
     params = {"user_id": user_id, "game_id": game_id}
     s = httpx.post(newgameurl, params=params)
-    
+
     # If successful, return the basic status and the user/game id
     if (s.status_code == httpx.codes.OK):
         responseObj = {"status": "new"}
@@ -67,9 +67,9 @@ def newGame(username: str):
         responseObj.update(params)
         responseObj.update({"remaining": t.json()["remaining"]})
 
-        # Populate the guesses object with the guesses from game state. 
+        # Populate the guesses object with the guesses from game state.
         # The game state will only have 1 member if no guesses have been made.
-        # So we check if it is longer than 1 
+        # So we check if it is longer than 1
         guesses = []
         if (len(t.json()) > 1):
             for i in range(1, len(t.json())):
@@ -99,5 +99,56 @@ def newGame(username: str):
         return responseObj
 
 @app.post("/{game_id}")
-def newGuess():
-    return []
+def newGuess(game_id: int, guess: str, username: str):
+    wordvalidateurl = 'http://127.0.0.1:9999/api/word-validation/word/isvalid/' + guess
+
+    #validate word
+    u = httpx.get(wordvalidateurl)
+    isValid = u.json()['valid'] == 'true'
+
+    #get userid
+    url = 'http://127.0.0.1:9999/api/stats/username/' + username
+    r = httpx.get(url)
+    user_id = r.json()["user_id"]
+
+    #get how many guesses remains in games
+    url = 'http://127.0.0.1:9999/api/game-state/' + str(user_id) + '/' + str(game_id)
+    r = httpx.get(url)
+    guesses = r.json()
+
+    #Record the guess and update the number of guesses remaining
+    if int(guesses['remaining']) > 0 and isValid:
+        updatedGuesses = int(guesses['remaining']) - 1
+        url = 'http://127.0.0.1:9999/api/game-state/newguess'
+        params = {"user_id": user_id, "game_id": game_id, "guess": guess}
+        r = httpx.post(url, params=params)
+
+        responseObj = {"guessesRemaining": updatedGuesses}
+
+        #Check to see if the guess is correct
+        if (r.status_code == httpx.codes.OK):
+            checkanswerurl = 'http://127.0.0.1:9999/api/answer-checking/answer/check/' + guess
+            u = httpx.get(checkanswerurl)
+            letters = {"correct": [], "present": []}
+
+            for i in range(1, 5):
+                letterscore = u.json()["accuracy"][i]
+                if (letterscore == 1):
+                    letters["present"].append(guess[i])
+                if (letterscore == 2):
+                    letters["correct"].append(guess[i])
+
+            #Record the win
+            #Return the user’s score
+            if len(letters['correct']) == 5:
+                return "correct"
+            #If the guess is incorrect and no guesses remain…
+            elif len(letters['correct']) < 5 and updatedGuesses == 0:
+                return "wrong"
+
+            #If the guess is incorrect and additional guesses remain
+            else:
+                responseObj.update({"letters": letters})
+                return responseObj
+
+    return "Sorry you reached the max number of guesses"
