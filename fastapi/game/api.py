@@ -99,17 +99,13 @@ def newGame(username: str):
         return responseObj
 
 @app.post("/{game_id}")
-def newGuess(game_id: int, guess: str, username: str):
+def newGuess(game_id: int, guess: str, user_id: str):
     wordvalidateurl = 'http://127.0.0.1:9999/api/word-validation/word/isvalid/' + guess
 
     #validate word
     u = httpx.get(wordvalidateurl)
     isValid = u.json()['valid'] == 'true'
 
-    #get userid
-    url = 'http://127.0.0.1:9999/api/stats/username/' + username
-    r = httpx.get(url)
-    user_id = r.json()["user_id"]
 
     #get how many guesses remains in games
     url = 'http://127.0.0.1:9999/api/game-state/' + str(user_id) + '/' + str(game_id)
@@ -123,7 +119,7 @@ def newGuess(game_id: int, guess: str, username: str):
         params = {"user_id": user_id, "game_id": game_id, "guess": guess}
         r = httpx.post(url, params=params)
 
-        responseObj = {"guessesRemaining": updatedGuesses}
+        responseObj = {"remaining": updatedGuesses}
 
         #Check to see if the guess is correct
         if (r.status_code == httpx.codes.OK):
@@ -148,7 +144,7 @@ def newGuess(game_id: int, guess: str, username: str):
 
             #If the guess is incorrect and additional guesses remain
             else:
-                responseObj.update({"letters": letters})
+                responseObj.update({"status": "incorrect", "letters": letters})
                 return responseObj
 
     return "Sorry you reached the max number of guesses"
