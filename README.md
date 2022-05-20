@@ -18,13 +18,13 @@ The entire list of services:
 
 ### PROJECT 5
 
-No setup needed for this project. The newest endpoint is /game.
+No setup needed for this project. The newest service is /game.
 
 Refer to Project 4 Execution for execution instructions.
 
 ### PROJECT 4 INITIALIZATION
 
-Cron job setup:
+Cron job setup (only do this after following the project 3 initialization):
 
 Navigate to the fastapi director
 
@@ -89,23 +89,19 @@ CREATE TABLE words(word TEXT)
 .quit
 ```
 
-To populate the answers db, run the /fastapi/answer-checking/
-populatedb.py script:
+To populate the answers db, navigate to /fastapi/answer-checking and run the populatedb.py script:
 
-`python3 ./fastapi/answer-checking/populatedb.py`
+`python3 ./populatedb.py`
 
-To get the dictionary from linux and trim it down to only valid words for wordle, run the command:
+
+To get the dictionary from linux and trim it down to only valid words for wordle, navigate to ./fastapi/word-validation and run the command:
 source 
 
-`./fastapi/word-validation/script.sh`
+`sh ./script.sh`
 
-To populate the words db, run the 
+To populate the words db, run the script:
 
-`/fastapi/word-validation/populatewords.py`
-
-script:
-
-`python3 ./fastapi/word-validation/populatewords.py`
+`python3 ./populatewords.py`
 
 
 
