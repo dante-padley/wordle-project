@@ -19,7 +19,7 @@ app = FastAPI()
 async def root():
     return{"message":"What in the world?"}
 
-@app.post("/game-state/newgame")
+@app.post("/newgame")
 def newGame(user_id: uuid.UUID, game_id: int):
 
     r = redis.Redis(port=settings.GAME_STATE_KEYSTORE)
@@ -41,7 +41,7 @@ def newGame(user_id: uuid.UUID, game_id: int):
 #This functionality was completed in project 2
 
 
-@app.post("/game-state/newguess")
+@app.post("/newguess")
 def newGuess(user_id: uuid.UUID, game_id: int, guess: str):
     r = redis.Redis(port=settings.GAME_STATE_KEYSTORE)
     game_key = "user:" + str(user_id) + ":game:" + str(game_id)
@@ -56,7 +56,7 @@ def newGuess(user_id: uuid.UUID, game_id: int, guess: str):
 #Restoring the state of a game. Upon request, the user should be able to 
 #retrieve an object containing the current state of a game, including words
 #guessed so far and the number of guesses remaining.
-@app.get("/game-state/{user_id}/{game_id}")
+@app.get("/{user_id}/{game_id}")
 def getGameState(user_id: uuid.UUID, game_id: int):
     r = redis.Redis(port = settings.GAME_STATE_KEYSTORE)
     game_key = "user:" + str(user_id) + ":game:" + str(game_id)
