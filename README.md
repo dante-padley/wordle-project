@@ -16,6 +16,12 @@ The entire list of services:
 
 **To test the apis in the browser, go to the desired endpoint and add /docs (i.e. 127.0.0.1:9999/api/game/docs)**
 
+### PROJECT 5
+
+No setup needed for this project. The newest endpoint is /game.
+
+Refer to Project 4 Execution for execution instructions.
+
 ### PROJECT 4 INITIALIZATION
 
 Cron job setup:
