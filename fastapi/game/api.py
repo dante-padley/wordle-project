@@ -99,7 +99,7 @@ def newGame(username: str):
         return responseObj
 
 @app.post("/{game_id}")
-def newGuess(game_id: int, guess: str, user_id: str):
+async def newGuess(game_id: int, guess: str, user_id: str):
     wordvalidateurl = 'http://127.0.0.1:9999/api/word-validation/word/isvalid/' + guess
 
     #validate word
@@ -143,9 +143,11 @@ def newGuess(game_id: int, guess: str, user_id: str):
 
                 guesses = 6 - updatedGuesses 
 
-                params = {"user_id": user_id, "game_id": game_id, "finished": date.today(), "guesses": guesses, "won": True} 
+                params = {"user_id": user_id, "game_id": game_id, "finished": str(date.today()), "guesses": guesses, "won": "true"} 
 
-                s = httpx.post(recordwinurl, params=params) 
+                async with httpx.AsyncClient() as client:
+                    s = await client.post(recordwinurl, json=params) 
+                    print(s.text)
 
                 responseObj.update({"status": "win", "remaining": updatedGuesses}) 
 
@@ -164,14 +166,20 @@ def newGuess(game_id: int, guess: str, user_id: str):
             elif len(letters['correct']) < 5 and updatedGuesses == 0:
                 recordlossurl = 'http://127.0.0.1:9999/api/stats/'
                 guesses = updatedGuesses
-                params = {"user_id": user_id, "game_id": game_id, "finished": date.today(), "guesses": guesses, "won": False}
-                s = httpx.post(recordlossurl, params=params)
+                params = {"user_id": user_id, "game_id": game_id, "finished": str(date.today()), "guesses": guesses, "won": "false"}
 
-                responseObj.update({"status": "loss", "remaining": updatedGuesses})    
+                async with httpx.AsyncClient() as client:
+                    s = await client.post(recordlossurl, json=params) 
+
+                responseObj.update({"status": "loss", "remaining": updatedGuesses})  
+
                 #Return users score
                 scoreurl = 'http://127.0.0.1:9999/api/stats/user/' + user_id
+
                 scores = httpx.get(scoreurl)
+
                 responseObj.update(scores.json())
+
                 return responseObj
 
             #If the guess is incorrect and additional guesses remain
