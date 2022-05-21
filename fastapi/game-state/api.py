@@ -21,7 +21,6 @@ async def root():
 
 @app.post("/game-state/newgame")
 def newGame(user_id: uuid.UUID, game_id: int):
-
     r = redis.Redis(port=settings.GAME_STATE_KEYSTORE)
 
     game_key = "user:" + str(user_id) + ":game:" + str(game_id)

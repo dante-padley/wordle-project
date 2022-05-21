@@ -8,15 +8,15 @@ import sqlite3
 import faker
 
 DATABASE = './stats.db'
-SCHEMA = './stats.sql'
+SCHEMA = 'stats/db/stats.sql'
 
 NUM_STATS = 1_000_000
 NUM_USERS = 100_000
 YEAR = 2022
 
 random.seed(YEAR)
-fake = faker.Faker()
-fake.seed(YEAR)
+fake = faker.Faker(YEAR)
+# fake.seed(YEAR)
 with contextlib.closing(sqlite3.connect(DATABASE)) as db:
     with open(SCHEMA) as f:
         db.executescript(f.read())

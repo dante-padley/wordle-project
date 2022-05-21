@@ -70,20 +70,20 @@ class Stats(BaseModel):
 #plug in our db connection and DRY up our code quite a bit.
 #See it used in any of the API paths here
 def get_db1():
-    with contextlib.closing(sqlite3.connect(settings.GAME_DATABASE1)) as db:
+    with contextlib.closing(sqlite3.connect(settings.GAME_DATABASE1, detect_types=sqlite3.PARSE_DECLTYPES, check_same_thread=False)) as db:
         db.row_factory = sqlite3.Row
         yield db
 
 def get_db2():
-    with contextlib.closing(sqlite3.connect(settings.GAME_DATABASE2)) as db:
+    with contextlib.closing(sqlite3.connect(settings.GAME_DATABASE2, detect_types=sqlite3.PARSE_DECLTYPES, check_same_thread=False)) as db:
         db.row_factory = sqlite3.Row
         yield db
 def get_db3():
-    with contextlib.closing(sqlite3.connect(settings.GAME_DATABASE3)) as db:
+    with contextlib.closing(sqlite3.connect(settings.GAME_DATABASE3, detect_types=sqlite3.PARSE_DECLTYPES, check_same_thread=False)) as db:
         db.row_factory = sqlite3.Row
         yield db
 def get_db4():
-    with contextlib.closing(sqlite3.connect(settings.USER_DATABASE)) as db:
+    with contextlib.closing(sqlite3.connect(settings.USER_DATABASE, detect_types=sqlite3.PARSE_DECLTYPES, check_same_thread=False)) as db:
         db.row_factory = sqlite3.Row
         yield db
  
@@ -101,6 +101,12 @@ app = FastAPI()
 async def root():
     return {"message": "What a world!"}
 
+@app.get("/username/{user_name}")
+async def getUserID(user_name: str, db: sqlite3.Connection = Depends(get_db4)):
+    selectedUser = db.execute(f"Select [user_id] FROM users WHERE users.username = '{user_name}'")
+    user_id = selectedUser.fetchone()[0]
+    data = {"user_name": user_name, "user_id": user_id}
+    return data
 
 @app.post("/stats/", status_code=status.HTTP_201_CREATED)
 def postGame(game: Game, db1: sqlite3.Connection = Depends(get_db1), db2: sqlite3.Connection = Depends(get_db2), db3: sqlite3.Connection = Depends(get_db3)):
